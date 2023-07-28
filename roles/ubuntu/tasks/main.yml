@@ -1,0 +1,75 @@
+---
+-   name: "APT - Update repo"
+    apt: 
+        name: "*"
+        update_cache: "yes"
+        state: "latest"
+
+-   name: "APT-KEY - Adding Microsoft key"
+    apt_key:
+        url: https://packages.microsoft.com/keys/microsoft.asc
+        keyring: "/etc/apt/keyrings/packages.microsoft.gpg"
+        state: present
+
+-   name: "APT-KEY - Adding Docker key"
+    apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        keyring: "/etc/apt/keyrings/docker.gpg"
+        state: present
+
+
+-   name: "APT-REPO - Adding VSCode Repo"
+    apt_repository:
+        repo:  deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main
+        filename: vscode
+        update_cache: yes
+        state: present
+
+-   name: "Variable - Get architecture"
+    shell: dpkg --print-architecture
+    changed_when: false
+    register: architecture
+
+-   name: "Variable - Get Ubuntu version"
+    shell: . /etc/os-release  && echo $VERSION_CODENAME
+    changed_when: false
+    register: version_codename
+
+-   name: "APT-REPO - Adding Docker Repo"
+    apt_repository:
+        repo:  deb [arch={{ architecture.stdout }} signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ version_codename.stdout }} stable
+        filename: docker
+        update_cache: yes
+        state: present
+
+-   name: "APT - Install dev tools" 
+    apt:
+        update_cache: "yes"
+        state: "latest"
+        pkg:
+        - vim
+        - htop
+        - zsh
+        - apt-transport-https
+        - code
+        - curl
+        - wget
+        - docker-ce 
+        - docker-ce-cli 
+        - containerd.io 
+        - docker-buildx-plugin 
+        - docker-compose-plugin
+
+-   name: "USER - creating user account"
+    user:
+        name: "{{ dev_user }}"
+        groups: sudo,docker
+        shell: /bin/zsh
+        append: yes
+        createhome: yes
+        state: present
+        password: "{{ dev_password | password_hash }}"
+
+-   name: "ZSH - Installing OHMYZSH"
+    become_user: "{{ dev_user }}"
+    shell: sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"

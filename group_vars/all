@@ -1,0 +1,4 @@
+--- 
+# global variables
+dev_user: dev
+dev_password: changeme
