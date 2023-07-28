@@ -72,4 +72,8 @@
 
 -   name: "ZSH - Installing OHMYZSH"
     become_user: "{{ dev_user }}"
-    shell: sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+    expect:
+        shell: sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+        response:
+            'Do you want o change your default shell to zsh? [Y/n]' : 'y'
+            'Password: ' : {{ dev_password }}
